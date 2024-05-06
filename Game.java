@@ -2,7 +2,7 @@ public class Game {
 
     // portable newline
     private final static String NEWLINE = System.getProperty("line.separator");
-  
+
     private Dungeon dungeon;     // the dungeon
     private char MONSTER;        // name of the monster (A - Z)
     private char ROGUE = '@';    // name of the rogue
@@ -49,11 +49,12 @@ public class Game {
 
 
     // play until monster catches the rogue
+    // play until monster catches the rogue
     public void play() {
         for (int t = 1; true; t++) {
             System.out.println("Move " + t);
             System.out.println();
-            
+
             // monster moves
             if (monsterSite.equals(rogueSite)) break;
             Site next = monster.move();
@@ -61,17 +62,25 @@ public class Game {
             else throw new RuntimeException("Monster caught cheating");
             System.out.println(this);
 
+
             // rogue moves
             if (monsterSite.equals(rogueSite)) break;
             next = rogue.move();
             if (dungeon.isLegalMove(rogueSite, next)) rogueSite = next;
             else throw new RuntimeException("Rogue caught cheating");
             System.out.println(this);
+
+            // Add a delay
+            try {
+                Thread.sleep(100); // 1000 milliseconds = 1 second
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         }
 
         System.out.println("Caught by monster");
-
     }
+
 
 
     // string representation of game state (inefficient because of Site and string concat)
