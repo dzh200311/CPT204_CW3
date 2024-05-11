@@ -27,6 +27,7 @@ public class Monster extends Role{
         boolean[][] visited = new boolean[N][N];
         Queue<Site> queue = new LinkedList<>();
         Map<String, Site> cameFrom = new HashMap<>();
+        boolean pathFound = false;
 
         queue.add(monster);
         visited[monster.i()][monster.j()] = true;
@@ -48,6 +49,7 @@ public class Monster extends Role{
                         cameFrom.put(siteToKey(newSite), current);
                         if (newSite.equals(rogue)) {  // 如果到达游荡者位置，立即停止搜索
                             queue.clear();
+                            pathFound = true;
                             break;
                         }
                     }
@@ -55,19 +57,19 @@ public class Monster extends Role{
             }
         }
 
+        if (!pathFound){
+            System.out.println("no path found!");
+            return monster;
+        }
         // 从游荡者位置回溯到最佳初始移动位置
         String stepKey = siteToKey(rogue);
-        Site move = monster;  // 默认移动为游荡者位置
+        Site move = rogue;  // 默认移动为游荡者位置
         while (cameFrom.containsKey(stepKey) && !cameFrom.get(stepKey).equals(monster)) {
             move = cameFrom.get(stepKey);
             stepKey = siteToKey(move);
         }
 
-
         System.out.println("next: " + move);
-        if (move.equals(monster)){
-            System.out.println("no path found!");
-        }
         return move;
     }
 

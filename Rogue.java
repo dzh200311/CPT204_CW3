@@ -23,8 +23,8 @@ public class Rogue extends Role{
         Site monster = game.getMonsterSite();
         Site rogue = game.getRogueSite();
         Site[] loop = findLoop();
-
-        // 接近怪物或未找到回路，尝试远离怪物
+        // 还没写好，要测试monster就把这些注释起来
+        /*// 接近怪物或未找到回路，尝试远离怪物
         if (loop == null || rogue.manhattanTo(monster) <= 1) {
             rogue = pathFind(monster, rogue);
             isInLoop = false;
@@ -38,8 +38,8 @@ public class Rogue extends Role{
                 rogue = pathFind(loop[loopIndex], rogue);
                 isInLoop = false;
             }
-        }
-        return game.getRogueSite();
+        }*/
+        return rogue;
     }
 
     private Site[] findLoop() {
