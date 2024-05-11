@@ -53,8 +53,6 @@ public class Game {
     public void play() {
         for (int t = 1; true; t++) {
             System.out.println("Move " + t);
-            System.out.println();
-
             // monster moves
             if (monsterSite.equals(rogueSite)) break;
             Site next = monster.move();
@@ -72,7 +70,7 @@ public class Game {
 
             // Add a delay
             try {
-                Thread.sleep(100); // 1000 milliseconds = 1 second
+                Thread.sleep(200); // 1000 milliseconds = 1 second
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -85,6 +83,9 @@ public class Game {
 
     // string representation of game state (inefficient because of Site and string concat)
     public String toString() {
+        for (int i = 0; i < 100; i++) {
+
+        }
         String s = "";
         for (int i = 0; i < N; i++) {
             for (int j = 0; j < N; j++) {
@@ -106,6 +107,7 @@ public class Game {
     public static void main(String[] args) {
         In stdin = new In();
         Game game = new Game(stdin);
+        System.out.println();
         System.out.println(game);
         game.play();
 

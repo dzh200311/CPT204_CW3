@@ -26,4 +26,8 @@ public class Site {
         return (manhattanTo(w) == 0);
     }
 
+    @Override
+    public String toString() {
+        return "i: " + i + ", j: " + j;
+    }
 }
