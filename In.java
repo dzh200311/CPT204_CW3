@@ -8,15 +8,13 @@
  ******************************************************************************/
 
 
-import java.net.URLConnection;
-import java.net.URL;
-import java.net.Socket;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.BufferedReader;
+import java.io.*;
+//import java.net.URLConnection;
+//import java.net.URL;
+//import java.net.Socket;
 
 
+/*老师给的版本
 class In {
    private BufferedReader br;
 
@@ -112,3 +110,51 @@ class In {
    
 
 }
+*/
+
+
+public class In {
+    private BufferedReader reader;
+    private static final String NEWLINE = System.getProperty("line.separator");
+
+    public In() {
+        this.reader = new BufferedReader(new InputStreamReader(System.in));
+    }
+
+
+    public String readLine() {
+        String line = null;
+        try {
+            line = reader.readLine();
+        } catch (IOException e) {
+            System.err.println("Error occurred while reading a line: " + e.toString());
+        }
+        return line;
+    }
+
+
+    public String readAll() {
+        StringBuilder allInput = new StringBuilder();
+        String line;
+        try {
+            while ((line = readLine()) != null) {
+                allInput.append(line).append(NEWLINE);
+            }
+        } catch (Exception e) {
+            System.err.println("Error occurred while reading all input: " + e.getMessage());
+        }
+        return allInput.toString();
+    }
+
+
+    public void close() {
+        if (reader != null) {
+            try {
+                reader.close();
+            } catch (IOException e) {
+                System.err.println("Error closing the reader: " + e.getMessage());
+            }
+        }
+    }
+}
+
