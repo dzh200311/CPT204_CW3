@@ -5,10 +5,7 @@ public class Rogue extends Role{
     private Dungeon dungeon;
     private int N;
 
-    private int loopIndex = 0; //循环路径的指针，为了标记要返回的下一个移动的坐标
-
-    private boolean isInLoop = false;
-
+    private Site previousSite = null;
     public Rogue(Game game) {
         super(game);
         this.game    = game;
@@ -16,100 +13,184 @@ public class Rogue extends Role{
         this.N       = dungeon.size();
     }
 
-
     // TAKE A RANDOM LEGAL MOVE
     // YOUR MAIN TASK IS TO RE-IMPLEMENT THIS METHOD TO DO SOMETHING INTELLIGENT
     public Site move() {
         Site monster = game.getMonsterSite();
         Site rogue = game.getRogueSite();
-        Site[] loop = findLoop();
-        // 还没写好，要测试monster就把这些注释起来
-        /*// 接近怪物或未找到回路，尝试远离怪物
-        if (loop == null || rogue.manhattanTo(monster) <= 1) {
-            rogue = pathFind(monster, rogue);
-            isInLoop = false;
+
+        // 先记录当前位置为之前的位置
+        Site tempPrevious = rogue;
+
+        Site nearCorridor = findCorridor(rogue);
+        if (nearCorridor == null || rogue.manhattanTo(monster) <= 1) {
+            // 如果没找到走廊或怪物太近，尝试逃跑
+            System.out.println("run");
+            rogue = escape(monster, rogue);
         } else {
-            //是否在循环的入口或者已经在循环内
-            if (rogue.equals(loop[loopIndex]) || isInLoop) {
-                rogue = loop[loopIndex];
-                isInLoop = true;
-                loopIndex = (loopIndex + 1) % loop.length; //指针指向下一个位置
+            // 如果在走廊中，往下一个走廊走（即寻路至走廊另一端的那个的出口，即另一端走廊与房间的连接处）
+            if (dungeon.isCorridor(rogue)) {
+
+                rogue = alongLoop(rogue, previousSite);
             } else {
-                rogue = pathFind(loop[loopIndex], rogue);
-                isInLoop = false;
+                // 如果不在loop入口，寻路至入口
+                rogue = pathFind(nearCorridor, rogue);
             }
-        }*/
+        }
+
+        // 更新previousSite为这次移动之前的位置
+        previousSite = tempPrevious;
+
         return rogue;
     }
 
-    private Site[] findLoop() {
-        boolean[] visited = new boolean[N * N]; // 假设地牢可以表示为一维数组
-        List<Site> path = new ArrayList<>();
-        for (int i = 0; i < N; i++) {
-            for (int j = 0; j < N; j++) {
-                if (!visited[i * N + j] && dfs(i, j, -1, -1, visited, path)) {
-                    return path.toArray(new Site[0]);
+
+    private Site findCorridor(Site start) {
+        int[][] directions = {{0, 1}, {1, 0}, {0, -1}, {-1, 0}}; // 顺序是右，下，左，上
+        int step = 1; // 初始步长
+        int x = start.i();
+        int y = start.j();
+
+        if (dungeon.isCorridor(start)) {
+            return start; // 如果起点已是走廊，则直接返回
+        }
+
+        while (true) {
+            for (int i = 0; i < directions.length; i++) {
+                for (int j = 0; j < step; j++) {
+                    x += directions[i][0];
+                    y += directions[i][1];
+
+                    if (x >= 0 && x < N && y >= 0 && y < N) { // 确保坐标在地图范围内
+                        Site current = new Site(x, y);
+                        if (dungeon.isCorridor(current)) {
+                            System.out.println("corridor found " + current);
+                            return current; // 找到走廊
+                        }
+                    }
+                }
+                if (i % 2 == 1) { // 在每完成一对方向（左右或上下）后增加步长
+                    step++;
                 }
             }
         }
-        return null;
     }
 
-    private boolean dfs(int x, int y, int px, int py, boolean[] visited, List<Site> path) {
-        if (visited[x * N + y]) {
-            return true; // 发现环
-        }
-        visited[x * N + y] = true;
-        path.add(new Site(x, y));
+    private Site alongLoop(Site current, Site previous) {
+        //TODO: 逻辑不对
+        int[][] directions = {{0, 1}, {1, 0}, {0, -1}, {-1, 0}};
+        Site nextStep = null;
+        System.out.println("previous: " + previous + "current: " + current);
+        for (int[] dir : directions) {
+            int ni = current.i() + dir[0];
+            int nj = current.j() + dir[1];
+            Site neighbor = new Site(ni, nj);
 
-        int[][] directions = {{0,1}, {1,0}, {0,-1}, {-1,0}}; // 上下左右移动
-        for (int[] d : directions) {
-            int nx = x + d[0], ny = y + d[1];
-            if (nx >= 0 && nx < N && ny >= 0 && ny < N && !(nx == px && ny == py)) { // 检查是否在边界内并排除父节点
-                if (dfs(nx, ny, x, y, visited, path)) {
-                    return true;
+            if (ni >= 0 && ni < N && nj >= 0 && nj < N && !neighbor.equals(previous)) {
+                if (dungeon.isCorridor(neighbor)) {
+                    nextStep = neighbor;
+                    break;
                 }
             }
         }
-
-        path.remove(path.size() - 1);
-        visited[x * N + y] = false;
-        return false;
+        return nextStep != null ? nextStep : current;
     }
 
 
-    private Site pathFind(Site target, Site rogue) {
+    private Site pathFind(Site target, Site start) {
+
+        System.out.println("rogue current: " + start);
+        //以loop的入口为目标，bfs寻路
+        if (start.equals(target)){
+            return  start;
+        }
+        boolean[][] visited = new boolean[N][N];
         Queue<Site> queue = new LinkedList<>();
-        Map<Site, Site> prev = new HashMap<>(); // 存储路径
-        queue.add(rogue);
-        prev.put(rogue, null);
-        while (!queue.isEmpty()) {
-            Site current = queue.poll();
-            if (current.equals(target)) {
-                return reconstructPath(prev, target);
-            }
+        Map<String, Site> cameFrom = new HashMap<>();
+        boolean pathFound = false;
 
-            int[][] directions = {{0,1}, {1,0}, {0,-1}, {-1,0}}; // 上下左右移动
-            for (int[] d : directions) {
-                Site next = new Site(current.i() + d[0], current.j() + d[1]);
-                if (dungeon.isLegalMove(current,next) && !prev.containsKey(next)) { // 检查有效性和是否已访问
-                    queue.add(next);
-                    prev.put(next, current);
+        queue.add(start);
+        visited[start.i()][start.j()] = true;
+        while (!queue.isEmpty()){
+            Site current = queue.poll();
+
+            for (int i = -1; i <= 1 ; i++) {
+                for (int j = -1; j <= 1; j++) {
+                    if (i == 0 && j == 0) continue;
+                    int newI = current.i() + i;
+                    int newJ = current.j() + j;
+                    Site newSite = new Site(newI,newJ);
+
+                    if (newI >= 0 && newI < N && newJ >= 0 && newJ < N && !visited[newI][newJ]&& dungeon.isLegalMove(current, newSite)){
+                        queue.add(newSite);
+                        visited[newI][newJ] = true;
+                        cameFrom.put(util.siteToKey(newSite), current);
+                        if (newSite.equals(target)) {
+                            queue.clear();
+                            pathFound = true;
+                            break;
+                        }
+                    }
                 }
             }
         }
-        return null; // 如果没有找到路径
+
+        if (!pathFound){
+            System.out.println("rogue no path found!");
+            return start;
+        }
+        // 从游荡者位置回溯到最佳初始移动位置
+        String stepKey = util.siteToKey(target);
+        Site move = target;  // 默认移动为游荡者位置
+        while (cameFrom.containsKey(stepKey) && !cameFrom.get(stepKey).equals(start)) {
+            move = cameFrom.get(stepKey);
+            stepKey = util.siteToKey(move);
+        }
+
+        System.out.println("rogue next: " + move);
+        return move;
     }
 
-    private Site reconstructPath(Map<Site, Site> prev, Site target) {
-        Site step = target;
-        Site nextMove = null;
-        while (prev.containsKey(step)) {
-            nextMove = step;
-            step = prev.get(step);
+    private Site escape(Site monster, Site rogue) {
+        //TODO: 检测是否是corridor，是的话就不能斜向走
+        int dx = monster.i() - rogue.i();
+        int dy = monster.j() - rogue.j();
+
+        int dirX = Integer.compare(dx, 0);
+        int dirY = Integer.compare(dy, 0);
+
+        Site bestMove = null;
+        int maxDist = -1;
+
+        // Check all surrounding cells in a 3x3 grid centered on the rogue
+        for (int i = -1; i <= 1; i++) {
+            for (int j = -1; j <= 1; j++) {
+
+                if (dungeon.isCorridor(rogue) && Math.abs(i) == 1 && Math.abs(j) == 1) {
+                    continue;
+                }
+                // Compute the potential move coordinates
+                int newX = rogue.i() + i;
+                int newY = rogue.j() + j;
+                Site newSite = new Site(newX, newY);
+
+                // Calculate the Manhattan distance from the new site to the monster
+                int dist = newSite.manhattanTo(monster);
+
+                // Check if moving to this site increases the distance to the monster and is not a wall
+                if ((i != dirX || j != dirY) && !dungeon.isWall(newSite) && dist > maxDist) {
+                    maxDist = dist;
+                    bestMove = newSite;
+                }
+            }
         }
-        return nextMove; // 返回从起点到达终点的第一步
+
+        // Return the best move found; if no move found, return the original position
+        return bestMove != null ? bestMove : rogue;
     }
+
+
+
 
 
 }

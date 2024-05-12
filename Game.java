@@ -58,14 +58,14 @@ public class Game {
             Site next = monster.move();
             if (dungeon.isLegalMove(monsterSite, next)) monsterSite = next;
             else throw new RuntimeException("Monster caught cheating");
-            System.out.println(this);
+            //System.out.println(this);
 
 
             // rogue moves
             if (monsterSite.equals(rogueSite)) break;
             next = rogue.move();
             if (dungeon.isLegalMove(rogueSite, next)) rogueSite = next;
-            else throw new RuntimeException("Rogue caught cheating");
+            else throw new RuntimeException("Rogue caught cheating: " + next);
             System.out.println(this);
 
             // Add a delay
