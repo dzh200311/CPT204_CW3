@@ -28,6 +28,6 @@ public class Site {
 
     @Override
     public String toString() {
-        return "i: " + i + ", j: " + j;
+        return "i: " + i + ", j: " + j + "\n";
     }
 }

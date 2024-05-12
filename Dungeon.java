@@ -21,33 +21,7 @@ public class Dungeon {
                 else if (board[i][j] == '+') isCorridor[i][j] = true;
             }
         }
-       /* adjMap = new HashMap<>();
-        //遍历格子的每一个点看到达周围的每一个点是否合法，如果合法就是邻居
-        for (int i = 0; i < N; i++) {
-            for (int j = 0; j < N; j++) {
-                //遍历每一个点
-                //得到nodeid
-                int nodeID = i*N + j;
-                //遍历周围九宫格--offset
-                for (int offsetI = -1; offsetI<=1;offsetI++){
-                    for (int offsetJ = -1; offsetJ<=1;offsetJ++){
-                        int gridNodeID = (i + offsetI)*N + (j+offsetJ);
-                        //如果移动合法，就是neighbor
-                        Site center = new Site(i,j);
-                        Site gridNode = new Site(i+ offsetI,j + offsetJ);
-                        if (isLegalMove(center,gridNode)){
-                            if(adjMap.containsKey(nodeID)){
-                                adjMap.get(nodeID).add(gridNodeID);
-                            }else {
-                                adjMap.put(nodeID,new ArrayList<>());
-                                adjMap.get(nodeID).add(gridNodeID);
-                            }
-                        }
-                    }
-                }
 
-            }
-        }*/
     }
 
     // return dimension of dungeon
@@ -92,10 +66,5 @@ public class Dungeon {
         return false;
     }
 
-    /*public int dijsktra(int startNodeId, int endNodeId){
-        HashMap<Integer,Integer> distMap = new HashMap<>();
-        HashMap<Integer,Integer> waitingMap = new HashMap<>();
-
-    }*/
 
 }
