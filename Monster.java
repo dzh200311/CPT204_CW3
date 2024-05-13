@@ -1,7 +1,4 @@
-import java.util.Queue;
-import java.util.LinkedList;
-import java.util.Map;
-import java.util.HashMap;
+import java.util.*;
 
 public class Monster extends Role{
     private Game game;
@@ -15,6 +12,7 @@ public class Monster extends Role{
         this.N       = dungeon.size();
     }
 
+
     public Site move() {
         Site monster = game.getMonsterSite();
         Site rogue = game.getRogueSite();
@@ -26,6 +24,7 @@ public class Monster extends Role{
         // 使用BFS找到最短路径
         boolean[][] visited = new boolean[N][N];
         Queue<Site> queue = new LinkedList<>();
+        //PriorityQueue<Site> queue = new PriorityQueue<>(Comparator.comparingInt(s -> s.manhattanTo(rogue)));
         Map<String, Site> cameFrom = new HashMap<>();
         boolean pathFound = false;
 
