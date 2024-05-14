@@ -69,6 +69,7 @@ public class Monster extends Role{
         }
 
         System.out.println("next monster site: " + move);
+
         return move;
     }
 

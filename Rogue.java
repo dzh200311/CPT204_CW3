@@ -7,6 +7,8 @@ public class Rogue extends Role{
 
     private Site previousSite = null;
     private LinkedList<Site> cycle = null;
+
+    ArrayList<Site> foundCorridor = new ArrayList<>();
     public Rogue(Game game) {
         super(game);
         this.game    = game;
@@ -22,7 +24,7 @@ public class Rogue extends Role{
 
         // 先记录当前位置为之前的位置
         Site tempPrevious = rogue;
-
+        System.out.println("rouge now: " + rogue);
         if (cycle == null){
             cycle = findCycle(rogue);
         }
@@ -32,7 +34,7 @@ public class Rogue extends Role{
             rogue = escape(monster, rogue);
         } else {
             // 如果在环中，往下一个走廊走（即寻路至走廊另一端的那个的出口，即另一端走廊与房间的连接处）
-            if (dungeon.isCorridor(rogue)) {
+            if (rogue.equals(cycle.getLast())) {
                 rogue = alongLoop(rogue, cycle);
             } else {
                 // 如果不在环入口，寻路至入口
@@ -42,12 +44,13 @@ public class Rogue extends Role{
 
         // 更新previousSite为这次移动之前的位置
         previousSite = tempPrevious;
-
+        System.out.println("rouge next: " + rogue);
         return rogue;
     }
 
 
     private Site alongLoop(Site start, Queue<Site> cycle) {
+        System.out.println("rouge walk along loop");
         if (cycle == null || cycle.isEmpty()) return start;
 
         Site nextStep = cycle.poll(); // 从队列头部移除元素
@@ -57,12 +60,28 @@ public class Rogue extends Role{
     }
 
     private LinkedList<Site> findCycle(Site start){
-        // 先寻找最近的走廊位置
+        // 先寻找最近的走廊位置,若没有，则记录找过的这个走廊，不找他找下一个
         Site corridorStart = findCorridor(start);
+        foundCorridor.add(corridorStart);
         if (corridorStart == null) {
+            //没有走廊也没有环
             return null;
         }
+       LinkedList<Site> cycle = dfs(corridorStart);
+        if (corridorStart == null){
+            //所找的走廊没有环，换一个
+            corridorStart = findCorridor(start);
+            foundCorridor.add(corridorStart);
+            if (corridorStart == null) {
+                //没有走廊也没有环
+                return null;
+            }
+            cycle = dfs(corridorStart);
+        }
+        return cycle;
+    }
 
+    private LinkedList<Site> dfs(Site corridorStart){
         HashSet<Site> visited = new HashSet<>();
         // 用于追踪到达每个点的路径
         Map<Site, Site> path = new HashMap<>();
@@ -74,8 +93,8 @@ public class Rogue extends Role{
 
         while (!stack.isEmpty()){
             Site current = stack.pop();
-            for (int i = -1; i <= 1; i++) {
-                for (int j = -1; j <= 1; j++) {
+            for (int i = 1; i >= -1; i--) {
+                for (int j = 1; j >= -1; j--) {
                     Site next = new Site(current.i()+i, current.j()+j);
                     if (dungeon.isRoom(next)){
                         if((i==0 && j==0))continue;
@@ -113,41 +132,67 @@ public class Rogue extends Role{
             }
             previous = current;
         }
-
         return null;
     }
 
     private Site findCorridor(Site start) {
-        int[][] directions = {{0, 1}, {1, 0}, {0, -1}, {-1, 0}}; // 顺序是右，下，左，上
-        int step = 1; // 初始步长
-        int x = start.i();
-        int y = start.j();
+        // 方向数组：右，下，左，上
+        int[][] directions = {{0, 1}, {1, 0}, {0, -1}, {-1, 0}};
+        Queue<Site> queue = new LinkedList<>();
+        Set<Site> visited = new HashSet<>(); // 用于防止重复访问
 
-        if (dungeon.isCorridor(start)) {
-            return start; // 如果起点已是走廊，则直接返回
-        }
+        queue.offer(start);
+        visited.add(start);
 
-        for (int i = 0; i < N*N; i++) {
-            for (int j = 0; j < directions.length; j++) {
-                for (int k = 0; k < step; k++) {
-                    x += directions[j][0];
-                    y += directions[j][1];
+        while (!queue.isEmpty()) {
+            Site current = queue.poll();
 
-                    if (x >= 0 && x < N && y >= 0 && y < N) { // 确保坐标在地图范围内
-                        Site current = new Site(x, y);
-                        if (dungeon.isCorridor(current)) {
-                            System.out.println("corridor found " + current);
-                            return current; // 找到走廊
+            // 检查当前位置是否为走廊
+            if (dungeon.isCorridor(current) && !foundCorridor.contains(current)) {
+                int roomCount = 0;
+                int wallCount = 0;
+                List<Site> adjacentSites = new ArrayList<>();
+
+                for (int[] direction : directions) {
+                    int adjacentX = current.i() + direction[0];
+                    int adjacentY = current.j() + direction[1];
+                    if (adjacentX >= 0 && adjacentX < N && adjacentY >= 0 && adjacentY < N) {
+                        Site adjacent = new Site(adjacentX, adjacentY);
+                        adjacentSites.add(adjacent);
+                        if (dungeon.isRoom(adjacent)) {
+                            roomCount++;
+                        } else if (!dungeon.isLegalMove(current, adjacent)) {
+                            wallCount++;
                         }
+                    } else {
+                        wallCount++; // Treat out of bounds as walls
                     }
                 }
-                if (j % 2 == 1) { // 在每完成一对方向（左右或上下）后增加步长
-                    step++;
+
+                // Check if exactly one adjacent site is a room and two are walls
+                if (roomCount == 1 && wallCount == 2) {
+                    return current; // This is a valid connection point
+                }
+            }
+
+            // 探索所有四个方向
+            for (int[] direction : directions) {
+                int newX = current.i() + direction[0];
+                int newY = current.j() + direction[1];
+
+                if (newX >= 0 && newX < N && newY >= 0 && newY < N) { // 确保坐标在地图范围内
+                    Site next = new Site(newX, newY);
+                    if (!visited.contains(next)&& dungeon.isLegalMove(current,next)) {
+                        queue.offer(next);
+                        visited.add(next); // 标记为已访问
+                    }
                 }
             }
         }
-        return null;
+
+        return null; // 如果没有找到走廊，返回 null
     }
+
 
     private Site pathFind(Site target, Site start) {
 
@@ -203,8 +248,9 @@ public class Rogue extends Role{
         return move;
     }
 
+
+
     private Site escape(Site monster, Site rogue) {
-        //TODO: 检测是否是corridor，是的话就不能斜向走
         int dx = monster.i() - rogue.i();
         int dy = monster.j() - rogue.j();
 
@@ -213,33 +259,47 @@ public class Rogue extends Role{
 
         Site bestMove = null;
         int maxDist = -1;
+        List<Site> validMoves = new ArrayList<>();  // List to store all valid moves
 
         // Check all surrounding cells in a 3x3 grid centered on the rogue
         for (int i = -1; i <= 1; i++) {
             for (int j = -1; j <= 1; j++) {
-
-                if (dungeon.isCorridor(rogue) && Math.abs(i) == 1 && Math.abs(j) == 1) {
-                    continue;
-                }
-                // Compute the potential move coordinates
                 int newX = rogue.i() + i;
                 int newY = rogue.j() + j;
                 Site newSite = new Site(newX, newY);
 
+                // Continue if the move is diagonal and in a corridor, which is not allowed
+                if (dungeon.isCorridor(newSite) && Math.abs(i) == 1 && Math.abs(j) == 1) {
+                    continue;
+                }
+
                 // Calculate the Manhattan distance from the new site to the monster
                 int dist = newSite.manhattanTo(monster);
 
-                // Check if moving to this site increases the distance to the monster and is not a wall
-                if ((i != dirX || j != dirY) && !dungeon.isWall(newSite) && dist > maxDist) {
-                    maxDist = dist;
-                    bestMove = newSite;
+                // Check if the site is a legal move and not the current position
+                if (dungeon.isLegalMove(rogue, newSite) && (newX != rogue.i() || newY != rogue.j())) {
+                    validMoves.add(newSite);  // Add to valid moves list
+
+                    // Check if moving to this site increases the distance to the monster
+                    if ((i != dirX || j != dirY) && dist > maxDist) {
+                        maxDist = dist;
+                        bestMove = newSite;
+                    }
                 }
             }
         }
 
-        // Return the best move found; if no move found, return the original position
-        return bestMove != null ? bestMove : rogue;
+        // If a best move was found, return it; otherwise, pick a random valid move
+        if (bestMove != null) {
+            return bestMove;
+        } else if (!validMoves.isEmpty()) {
+            Random rand = new Random();
+            return validMoves.get(rand.nextInt(validMoves.size()));
+        } else {
+            return rogue;  // If no valid moves are found, return the original position
+        }
     }
+
 
 
 
