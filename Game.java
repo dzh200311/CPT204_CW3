@@ -58,7 +58,7 @@ public class Game {
             Site next = monster.move();
             if (dungeon.isLegalMove(monsterSite, next)) monsterSite = next;
             else throw new RuntimeException("Monster caught cheating");
-            //System.out.println(this);
+            System.out.println(this);
 
 
             // rogue moves

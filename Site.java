@@ -1,3 +1,6 @@
+import java.util.HashSet;
+import java.util.Objects;
+
 public class Site {
     private int i;
     private int j;
@@ -27,7 +30,33 @@ public class Site {
     }
 
     @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null || getClass() != obj.getClass()) {
+            return false;
+        }
+        Site site = (Site) obj;
+        return i == site.i && j == site.j;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(i, j);
+    }
+
+    @Override
     public String toString() {
         return "i: " + i + ", j: " + j + "\n";
     }
+
+    public static void main(String[] args) {
+        Site a = new Site(1,1);
+        Site b = new Site(1,1);
+        HashSet<Site> set = new HashSet<>();
+        set.add(a);
+        System.out.println(set.contains(b));
+    }
 }
+

@@ -6,6 +6,7 @@ public class Rogue extends Role{
     private int N;
 
     private Site previousSite = null;
+    private LinkedList<Site> cycle = null;
     public Rogue(Game game) {
         super(game);
         this.game    = game;
@@ -22,19 +23,20 @@ public class Rogue extends Role{
         // 先记录当前位置为之前的位置
         Site tempPrevious = rogue;
 
-        Site nearCorridor = findCorridor(rogue);
-        if (nearCorridor == null || rogue.manhattanTo(monster) <= 1) {
-            // 如果没找到走廊或怪物太近，尝试逃跑
+        if (cycle == null){
+            cycle = findCycle(rogue);
+        }
+        if (cycle == null || rogue.manhattanTo(monster) <= 1) {
+            // 如果没找到环或怪物太近，尝试逃跑
             System.out.println("run");
             rogue = escape(monster, rogue);
         } else {
-            // 如果在走廊中，往下一个走廊走（即寻路至走廊另一端的那个的出口，即另一端走廊与房间的连接处）
+            // 如果在环中，往下一个走廊走（即寻路至走廊另一端的那个的出口，即另一端走廊与房间的连接处）
             if (dungeon.isCorridor(rogue)) {
-
-                rogue = alongLoop(rogue, previousSite);
+                rogue = alongLoop(rogue, cycle);
             } else {
-                // 如果不在loop入口，寻路至入口
-                rogue = pathFind(nearCorridor, rogue);
+                // 如果不在环入口，寻路至入口
+                rogue = pathFind(cycle.get(0), rogue);
             }
         }
 
@@ -44,6 +46,76 @@ public class Rogue extends Role{
         return rogue;
     }
 
+
+    private Site alongLoop(Site start, Queue<Site> cycle) {
+        if (cycle == null || cycle.isEmpty()) return start;
+
+        Site nextStep = cycle.poll(); // 从队列头部移除元素
+        cycle.offer(nextStep); // 将该元素重新加入队列尾部，保持环状结构
+
+        return nextStep;
+    }
+
+    private LinkedList<Site> findCycle(Site start){
+        // 先寻找最近的走廊位置
+        Site corridorStart = findCorridor(start);
+        if (corridorStart == null) {
+            return null;
+        }
+
+        HashSet<Site> visited = new HashSet<>();
+        // 用于追踪到达每个点的路径
+        Map<Site, Site> path = new HashMap<>();
+
+        visited.add(corridorStart);
+        Stack<Site> stack = new Stack<>();
+        stack.push(corridorStart);
+        Site previous = null;
+
+        while (!stack.isEmpty()){
+            Site current = stack.pop();
+            for (int i = -1; i <= 1; i++) {
+                for (int j = -1; j <= 1; j++) {
+                    Site next = new Site(current.i()+i, current.j()+j);
+                    if (dungeon.isRoom(next)){
+                        if((i==0 && j==0))continue;
+                    }
+                    if (dungeon.isCorridor(next)){
+                        if ((Math.abs(i) == 1 && Math.abs(j) == 1) || (i==0 && j==0)) {
+                            continue;
+                        }
+                    }
+
+                    if ((next.i() >= N || next.j() >=N) || (previous != null && next.equals(previous))){
+                        continue;
+                    }
+                    if (previous == null && dungeon.isRoom(next))continue;
+
+                    if(visited.contains(next)&&dungeon.isRoom(next))continue;
+
+                    if (next.equals(corridorStart)){
+                        LinkedList<Site> cycle = new LinkedList<>();
+                        Site temp = current;
+                        cycle.push(corridorStart);
+                        while (temp != corridorStart ) {
+                            cycle.addFirst(temp);
+                            temp = path.get(temp);
+                        }
+                        System.out.println(cycle);
+                        return cycle;
+                    }
+                    if (!visited.contains(next) && dungeon.isLegalMove(current,next)){
+                        visited.add(next);
+                        stack.push(next);
+                        path.put(next, current);
+                    }
+                }
+            }
+            previous = current;
+        }
+
+        return null;
+    }
 
     private Site findCorridor(Site start) {
         int[][] directions = {{0, 1}, {1, 0}, {0, -1}, {-1, 0}}; // 顺序是右，下，左，上
@@ -55,11 +127,11 @@ public class Rogue extends Role{
             return start; // 如果起点已是走廊，则直接返回
         }
 
-        while (true) {
-            for (int i = 0; i < directions.length; i++) {
-                for (int j = 0; j < step; j++) {
-                    x += directions[i][0];
-                    y += directions[i][1];
+        for (int i = 0; i < N*N; i++) {
+            for (int j = 0; j < directions.length; j++) {
+                for (int k = 0; k < step; k++) {
+                    x += directions[j][0];
+                    y += directions[j][1];
 
                     if (x >= 0 && x < N && y >= 0 && y < N) { // 确保坐标在地图范围内
                         Site current = new Site(x, y);
@@ -69,33 +141,13 @@ public class Rogue extends Role{
                         }
                     }
                 }
-                if (i % 2 == 1) { // 在每完成一对方向（左右或上下）后增加步长
+                if (j % 2 == 1) { // 在每完成一对方向（左右或上下）后增加步长
                     step++;
                 }
             }
         }
+        return null;
     }
-
-    private Site alongLoop(Site current, Site previous) {
-        //TODO: 逻辑不对
-        int[][] directions = {{0, 1}, {1, 0}, {0, -1}, {-1, 0}};
-        Site nextStep = null;
-        System.out.println("previous: " + previous + "current: " + current);
-        for (int[] dir : directions) {
-            int ni = current.i() + dir[0];
-            int nj = current.j() + dir[1];
-            Site neighbor = new Site(ni, nj);
-
-            if (ni >= 0 && ni < N && nj >= 0 && nj < N && !neighbor.equals(previous)) {
-                if (dungeon.isCorridor(neighbor)) {
-                    nextStep = neighbor;
-                    break;
-                }
-            }
-        }
-        return nextStep != null ? nextStep : current;
-    }
-
 
     private Site pathFind(Site target, Site start) {
 
