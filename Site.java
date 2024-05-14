@@ -48,7 +48,7 @@ public class Site {
 
     @Override
     public String toString() {
-        return "i: " + i + ", j: " + j + "\n";
+        return "(i: " + i + ", j: " + j + ") ";
     }
 
     public static void main(String[] args) {
