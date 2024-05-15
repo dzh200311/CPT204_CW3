@@ -33,7 +33,7 @@ public class Rogue extends Role{
             System.out.println("run");
             rogue = escape(monster, rogue);
 
-            if (cycle != null && rogue.manhattanTo(cycle.getLast()) == 1 && dungeon.isRoom(tempPrevious)){
+            if (cycle != null && tempPrevious.manhattanTo(cycle.getLast()) == 1 && dungeon.isRoom(tempPrevious)){
                 System.out.println("yes");
                 rogue = cycle.getLast();
             }
@@ -164,7 +164,7 @@ public class Rogue extends Role{
 
     private Site findCorridor(Site start) {
         // 方向数组：右，下，左，上
-        int[][] directions = {{0, 1}, {1, 0}, {0, -1}, {-1, 0}};
+        int[][] directions = {{1, 0}, {0, 1}, {-1,0}, {0, -1}};
         Queue<Site> queue = new LinkedList<>();
         Set<Site> visited = new HashSet<>(); // 用于防止重复访问
 
@@ -192,7 +192,7 @@ public class Rogue extends Role{
                 }
 
                 // Check if exactly one adjacent site is a room and two are walls
-                if (roomCount >= 1 ) {
+                if (roomCount >= 1 && ((current.manhattanTo(game.getMonsterSite()) >= 3 && current.manhattanTo(game.getRogueSite()) <=3 )|| current.manhattanTo(game.getMonsterSite()) >= 5)) {
                     return current; // This is a valid connection point
                 }
             }

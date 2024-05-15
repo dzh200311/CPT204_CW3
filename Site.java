@@ -51,12 +51,5 @@ public class Site {
         return "(i: " + i + ", j: " + j + ") ";
     }
 
-    public static void main(String[] args) {
-        Site a = new Site(1,1);
-        Site b = new Site(1,1);
-        HashSet<Site> set = new HashSet<>();
-        set.add(a);
-        System.out.println(set.contains(b));
-    }
 }
 
