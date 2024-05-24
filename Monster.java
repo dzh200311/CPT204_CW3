@@ -24,7 +24,6 @@ public class Monster extends Role{
         // 使用BFS找到最短路径
         boolean[][] visited = new boolean[N][N];
         Queue<Site> queue = new LinkedList<>();
-        //PriorityQueue<Site> queue = new PriorityQueue<>(Comparator.comparingInt(s -> s.manhattanTo(rogue)));
         Map<String, Site> cameFrom = new HashMap<>();
         boolean pathFound = false;
 
@@ -41,7 +40,9 @@ public class Monster extends Role{
                     int newX = current.i() + i;
                     int newY = current.j() + j;
                     Site newSite = new Site(newX, newY);
-
+                    if (dungeon.isCorridor(newSite) && Math.abs(i) == 1 && Math.abs(j) == 1) {
+                        continue;
+                    }
                     if (newX >= 0 && newX < N && newY >= 0 && newY < N && !visited[newX][newY] && dungeon.isLegalMove(current, newSite)) {
                         queue.add(newSite);
                         visited[newX][newY] = true;

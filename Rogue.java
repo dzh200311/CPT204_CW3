@@ -17,6 +17,7 @@ public class Rogue extends Role{
 
     // TAKE A RANDOM LEGAL MOVE
     // YOUR MAIN TASK IS TO RE-IMPLEMENT THIS METHOD TO DO SOMETHING INTELLIGENT
+
     public Site move() {
         Site monster = game.getMonsterSite();
         Site rogue = game.getRogueSite();
@@ -63,30 +64,31 @@ public class Rogue extends Role{
         return nextStep;
     }
 
-    private LinkedList<Site> findCycle(Site start){
-        // 先寻找最近的走廊位置,若没有，则记录找过的这个走廊，不找他找下一个
+    private LinkedList<Site> findCycle(Site start) {
         Site corridorStart = findCorridor(start);
         foundCorridor.add(corridorStart);
-        if (corridorStart == null) {
-            //没有走廊也没有环
-            System.out.println("No cycle. run.");
-            return null;
-        }
-        System.out.println("entry found");
-       LinkedList<Site> cycle = cycleConstruct(corridorStart);
-        if (cycle == null){
-            //所找的走廊没有环，换一个
+
+        // 使用 while 循环查找有效的走廊和环
+        while (corridorStart != null) {
+            System.out.println("entry found");
+            LinkedList<Site> cycle = cycleConstruct(corridorStart);
+
+            // 如果找到环，返回环
+            if (cycle != null) {
+                return cycle;
+            }
+
+            // 没有找到环，继续查找下一个走廊
             System.out.println("current corridor is not cycle. look for another");
             corridorStart = findCorridor(start);
             foundCorridor.add(corridorStart);
-            if (corridorStart == null) {
-                System.out.println("No cycle. run.");
-                return null;
-            }
-            cycle = cycleConstruct(corridorStart);
         }
-        return cycle;
+
+        // 没有找到任何走廊或环，返回 null
+        System.out.println("No cycle. run.");
+        return null;
     }
+
 
 
     private LinkedList<Site> cycleConstruct(Site corridorStart){
@@ -118,7 +120,7 @@ public class Rogue extends Role{
                         continue;
                     }
                     if (previous == null && dungeon.isRoom(next)) continue;
-                    if (neighborIsRoom(current,iter,path)  && dungeon.isRoom(next)) continue;
+                    if (neighborIsRoom(current,iter,path) && dungeon.isRoom(next)) continue;
                     if(visited.contains(next)&&dungeon.isRoom(next))continue;
 
                     if (next.equals(corridorStart)){
@@ -191,7 +193,7 @@ public class Rogue extends Role{
                     }
                 }
 
-                // Check if exactly one adjacent site is a room and two are walls
+                // Check if exactly one adjacent site is a room, and check whether current entry is closer to monster
                 if (roomCount >= 1 && ((current.manhattanTo(game.getMonsterSite()) >= 3 && current.manhattanTo(game.getRogueSite()) <=3 )|| current.manhattanTo(game.getMonsterSite()) >= 5)) {
                     return current; // This is a valid connection point
                 }
@@ -235,10 +237,13 @@ public class Rogue extends Role{
             for (int i = -1; i <= 1 ; i++) {
                 for (int j = -1; j <= 1; j++) {
                     if (i == 0 && j == 0) continue;
+
                     int newI = current.i() + i;
                     int newJ = current.j() + j;
                     Site newSite = new Site(newI,newJ);
-
+                    if (dungeon.isCorridor(newSite) && Math.abs(i) == 1 && Math.abs(j) == 1) {
+                        continue;
+                    }
                     if (newI >= 0 && newI < N && newJ >= 0 && newJ < N && !visited[newI][newJ]&& dungeon.isLegalMove(current, newSite)){
                         queue.add(newSite);
                         visited[newI][newJ] = true;

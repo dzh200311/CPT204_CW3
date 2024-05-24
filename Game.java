@@ -59,9 +59,7 @@ public class Game {
             Site next = monster.move();
             if (dungeon.isLegalMove(monsterSite, next)) monsterSite = next;
             else throw new RuntimeException("Monster caught cheating");
-            System.out.println(this);
-
-
+            // System.out.println(this);
             // rogue moves
             if (monsterSite.equals(rogueSite)) break;
             next = rogue.move();
@@ -84,9 +82,7 @@ public class Game {
 
     // string representation of game state (inefficient because of Site and string concat)
     public String toString() {
-        for (int i = 0; i < 100; i++) {
 
-        }
         String s = "";
         for (int i = 0; i < N; i++) {
             for (int j = 0; j < N; j++) {
