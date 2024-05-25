@@ -14,15 +14,11 @@ public class Rogue extends Role{
         this.dungeon = game.getDungeon();
         this.N       = dungeon.size();
     }
-
-    // TAKE A RANDOM LEGAL MOVE
-    // YOUR MAIN TASK IS TO RE-IMPLEMENT THIS METHOD TO DO SOMETHING INTELLIGENT
-
     public Site move() {
         Site monster = game.getMonsterSite();
         Site rogue = game.getRogueSite();
 
-        // 先记录当前位置为之前的位置
+        // Record the current position as the previous position first
         Site tempPrevious = rogue;
         System.out.println("rouge now: " + rogue);
         if (cycle == null){
@@ -30,7 +26,7 @@ public class Rogue extends Role{
             cycle = findCycle(rogue);
         }
         if (cycle == null || rogue.manhattanTo(monster) <= 1) {
-            // 如果没找到环或怪物太近，尝试逃跑
+            // If you don't find the ring or the monster is too close, try to run away.
             System.out.println("run");
             rogue = escape(monster, rogue);
 
@@ -40,11 +36,11 @@ public class Rogue extends Role{
             }
 
         } else {
-            // 如果在环中，往下一个走廊走（即寻路至走廊另一端的那个的出口，即另一端走廊与房间的连接处）
+            // If in the cycle, go down the next corridor (i.e., find your way to the exit of the one at the other end of the corridor, where the corridor at the other end connects to the room).
             if (rogue.equals(cycle.getLast())) {
                 rogue = alongLoop(rogue, cycle);
             } else {
-                // 如果不在环入口，寻路至入口
+                // If not at the ring entrance, find your way to the entrance.
                 rogue = pathFind(cycle.getLast(), rogue);
             }
         }
@@ -58,8 +54,8 @@ public class Rogue extends Role{
         System.out.println("rouge walk along loop");
         if (cycle == null || cycle.isEmpty()) return start;
 
-        Site nextStep = cycle.poll(); // 从队列头部移除元素
-        cycle.offer(nextStep); // 将该元素重新加入队列尾部，保持环状结构
+        Site nextStep = cycle.poll(); // Remove elements from the head of the queue
+        cycle.offer(nextStep); // Re-add the element to the tail of the queue, maintaining the ring structure
 
         return nextStep;
     }
@@ -68,23 +64,23 @@ public class Rogue extends Role{
         Site corridorStart = findCorridor(start);
         foundCorridor.add(corridorStart);
 
-        // 使用 while 循环查找有效的走廊和环
+        // Using while loops to find valid corridors and rings
         while (corridorStart != null) {
             System.out.println("entry found");
             LinkedList<Site> cycle = cycleConstruct(corridorStart);
 
-            // 如果找到环，返回环
+            // If the cycle is found, return the cycle
             if (cycle != null) {
                 return cycle;
             }
 
-            // 没有找到环，继续查找下一个走廊
+            // No rings found. Keep looking for the next corridor.
             System.out.println("current corridor is not cycle. look for another");
             corridorStart = findCorridor(start);
             foundCorridor.add(corridorStart);
         }
 
-        // 没有找到任何走廊或环，返回 null
+        // Returns null if no corridor or cycle was found.
         System.out.println("No cycle. run.");
         return null;
     }
@@ -93,7 +89,7 @@ public class Rogue extends Role{
 
     private LinkedList<Site> cycleConstruct(Site corridorStart){
         HashSet<Site> visited = new HashSet<>();
-        // 用于追踪到达每个点的路径
+        // Used to trace the path to each point
         Map<Site, Site> path = new HashMap<>();
 
         visited.add(corridorStart);
@@ -165,10 +161,10 @@ public class Rogue extends Role{
     }
 
     private Site findCorridor(Site start) {
-        // 方向数组：右，下，左，上
+        // Direction array: right, down, left, up
         int[][] directions = {{1, 0}, {0, 1}, {-1,0}, {0, -1}};
         Queue<Site> queue = new LinkedList<>();
-        Set<Site> visited = new HashSet<>(); // 用于防止重复访问
+        Set<Site> visited = new HashSet<>(); // Used to prevent repeat visits
 
         queue.offer(start);
         visited.add(start);
@@ -176,7 +172,7 @@ public class Rogue extends Role{
         while (!queue.isEmpty()) {
             Site current = queue.poll();
 
-            // 检查当前位置是否为入口
+            // Check if the current position is an entrance
             if (dungeon.isCorridor(current) && !foundCorridor.contains(current)) {
                 int roomCount = 0;
                 List<Site> adjacentSites = new ArrayList<>();
@@ -199,28 +195,28 @@ public class Rogue extends Role{
                 }
             }
 
-            // 探索所有四个方向
+            // Explore all four directions
             for (int[] direction : directions) {
                 int newX = current.i() + direction[0];
                 int newY = current.j() + direction[1];
 
-                if (newX >= 0 && newX < N && newY >= 0 && newY < N) { // 确保坐标在地图范围内
+                if (newX >= 0 && newX < N && newY >= 0 && newY < N) { // Make sure the coordinates are within the map
                     Site next = new Site(newX, newY);
                     if (!visited.contains(next)&& dungeon.isLegalMove(current,next)) {
                         queue.offer(next);
-                        visited.add(next); // 标记为已访问
+                        visited.add(next); // Marked as visited
                     }
                 }
             }
         }
 
-        return null; // 如果没有找到走廊，返回 null
+        return null; // Returns null if no corridor is found
     }
 
 
     private Site pathFind(Site target, Site start) {
 
-        //以loop的入口为目标，bfs寻路
+        //Targeting the entrance to the loop, bfs pathfinding
         if (start.equals(target)){
             return  start;
         }
@@ -262,9 +258,9 @@ public class Rogue extends Role{
             System.out.println("rogue no path found!");
             return start;
         }
-        // 从游荡者位置回溯到最佳初始移动位置
+        // Backtracking from wanderer position to optimal initial movement position
         String stepKey = util.siteToKey(target);
-        Site move = target;  // 默认移动为游荡者位置
+        Site move = target;  // Default move to wanderer position
         while (cameFrom.containsKey(stepKey) && !cameFrom.get(stepKey).equals(start)) {
             move = cameFrom.get(stepKey);
             stepKey = util.siteToKey(move);

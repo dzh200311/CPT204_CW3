@@ -18,10 +18,10 @@ public class Monster extends Role{
         Site rogue = game.getRogueSite();
         System.out.println("monster site: " + monster);
         if (monster.equals(rogue)) {
-            return monster;  // 如果怪物已经在游荡者位置上，直接返回当前位置
+            return monster;  // If the monster is already in the rogue's position, return directly to the current position
         }
 
-        // 使用BFS找到最短路径
+        // Finding the shortest path using BFS
         boolean[][] visited = new boolean[N][N];
         Queue<Site> queue = new LinkedList<>();
         Map<String, Site> cameFrom = new HashMap<>();
@@ -33,7 +33,7 @@ public class Monster extends Role{
         while (!queue.isEmpty()) {
             Site current = queue.poll();
 
-            // 检查八个方向的邻居
+            // Check the neighbors in eight directions
             for (int i = -1; i <= 1; i++) {
                 for (int j = -1; j <= 1; j++) {
                     if (i == 0 && j == 0) continue;
@@ -47,7 +47,7 @@ public class Monster extends Role{
                         queue.add(newSite);
                         visited[newX][newY] = true;
                         cameFrom.put(util.siteToKey(newSite), current);
-                        if (newSite.equals(rogue)) {  // 如果到达游荡者位置，立即停止搜索
+                        if (newSite.equals(rogue)) {  // Stop the search immediately if you reach the wanderer's location.
                             queue.clear();
                             pathFound = true;
                             break;
@@ -61,9 +61,9 @@ public class Monster extends Role{
             System.out.println("no path found!");
             return monster;
         }
-        // 从游荡者位置回溯到最佳初始移动位置
+        // Backtracking from rogue position to optimal initial movement position
         String stepKey = util.siteToKey(rogue);
-        Site move = rogue;  // 默认移动为游荡者位置
+        Site move = rogue;  // initial is the rogue
         while (cameFrom.containsKey(stepKey) && !cameFrom.get(stepKey).equals(monster)) {
             move = cameFrom.get(stepKey);
             stepKey = util.siteToKey(move);

@@ -16,7 +16,7 @@ public class In {
     private BufferedReader reader;
     private static final String NEWLINE = System.getProperty("line.separator");
 
-    // 默认构造函数，读取地牢地图文件
+    // Default constructor, read dungeon map file
     public In() {
         File directory = new File("./Dungeons"); // 设置默认目录
         if (directory.exists() && directory.isDirectory()) {
@@ -57,7 +57,7 @@ public class In {
         }
     }
 
-    // 读取一行
+    // Read a line
     public String readLine() {
         try {
             return this.reader.readLine();
@@ -67,7 +67,7 @@ public class In {
         }
     }
 
-    // 关闭 BufferedReader
+    // turn off BufferedReader
     public void close() {
         if (this.reader != null) {
             try {
